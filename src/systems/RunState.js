@@ -96,8 +96,7 @@ export class RunState {
 
   reactToBarrier() {
     if (this.boostActive) return false;
-    this.gameOver = true;
-    this.running = false;
+    this._lose();
     return true;
   }
 
