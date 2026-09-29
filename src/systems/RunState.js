@@ -16,6 +16,7 @@ export class RunState {
     this._onWin = onWin;
     this._onLose = onLose;
     this.reset();
+    this.running = false;
   }
 
   reset() {
