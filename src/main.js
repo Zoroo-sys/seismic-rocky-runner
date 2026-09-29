@@ -108,12 +108,11 @@ class Game {
 
     this.audio.unlock();
     this.audio.startMusic();
-    this.audio.startAmbient();
+    
   }
 
   _finish(showScreen) {
     this.audio.stopMusic();
-    this.audio.stopAmbient();
     this.audio.setDanger(false);
     if (this.runState.won) this.audio.playVictory();
     showScreen();
