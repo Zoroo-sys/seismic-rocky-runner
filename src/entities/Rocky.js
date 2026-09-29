@@ -155,11 +155,13 @@ export class Rocky {
     this.legR = this._buildLeg(1, stone, stoneLight);
 
     const auraMat = new THREE.MeshBasicMaterial({ color: 0x39e77f, transparent: true, opacity: 0.28 });
+    auraMat.depthWrite = false;
     this.aura = sphere(1.35, auraMat);
     this.aura.position.y = 1.1;
     this.aura.visible = false;
+    this.aura.renderOrder = 1;
     this.group.add(this.aura);
-
+    
     this.group.scale.set(0.85, 0.85, 0.85);
   }
 
