@@ -5,28 +5,30 @@ export class AudioDirector {
     this.musicBus = null;
     this.sfxBus = null;
     this.noiseBuffer = null;
-    this.ambientNoiseBuffer = null;
 
     this.musicRunning = false;
     this.dangerMode = false;
     this.musicStep = 0;
     this.musicTimer = null;
     this.heartbeatTimer = null;
-
-    this.ambientGain = null;
-    this.ambientSource = null;
-    this.ambientFilter = null;
-    this.ambientLfo = null;
   }
 
   unlock() {
     if (this.ctx) return;
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    this.master = this._gain(0.85, this.ctx.destination);
-    this.musicBus = this._gain(0.35, this.master);
-    this.sfxBus = this._gain(0.9, this.master);
+
+    this.limiter = this.ctx.createDynamicsCompressor();
+    this.limiter.threshold.value = -14;
+    this.limiter.knee.value = 8;
+    this.limiter.ratio.value = 18;
+    this.limiter.attack.value = 0.003;
+    this.limiter.release.value = 0.18;
+    this.limiter.connect(this.ctx.destination);
+
+    this.master = this._gain(0.7, this.limiter);
+    this.musicBus = this._gain(0.28, this.master);
+    this.sfxBus = this._gain(0.7, this.master);
     this.noiseBuffer = this._makeNoise(1.0);
-    this.ambientNoiseBuffer = this._makeNoise(4.0);
   }
 
   startMusic() {
@@ -45,50 +47,6 @@ export class AudioDirector {
   setDanger(active) {
     this.dangerMode = !!active;
     active ? this._startHeartbeat() : this._stopHeartbeat();
-    this._duckAmbient(active);
-  }
-
-  startAmbient() {
-    this.unlock();
-    if (this.ambientSource) return;
-
-    this.ambientGain = this._gain(0.0001, this.master);
-    this.ambientFilter = this.ctx.createBiquadFilter();
-    this.ambientFilter.type = 'bandpass';
-    this.ambientFilter.frequency.value = 1100;
-    this.ambientFilter.Q.value = 0.6;
-
-    this.ambientSource = this.ctx.createBufferSource();
-    this.ambientSource.buffer = this.ambientNoiseBuffer;
-    this.ambientSource.loop = true;
-    this.ambientSource.connect(this.ambientFilter);
-    this.ambientFilter.connect(this.ambientGain);
-    this.ambientSource.start();
-
-    this.ambientLfo = this.ctx.createOscillator();
-    this.ambientLfo.type = 'sine';
-    this.ambientLfo.frequency.value = 0.13;
-    const lfoGain = this._gain(450);
-    this.ambientLfo.connect(lfoGain);
-    lfoGain.connect(this.ambientFilter.frequency);
-    this.ambientLfo.start();
-
-    if (!this.dangerMode) {
-      this._rampTo(this.ambientGain.gain, 0.05, 1.4);
-    }
-  }
-
-  stopAmbient() {
-    if (!this.ambientSource) return;
-    this._rampTo(this.ambientGain.gain, 0.0001, 0.3);
-    const source = this.ambientSource;
-    const lfo = this.ambientLfo;
-    setTimeout(() => {
-      try { source.stop(); } catch (e) {}
-      try { lfo.stop(); } catch (e) {}
-    }, 400);
-    this.ambientSource = null;
-    this.ambientLfo = null;
   }
 
   playShieldPickup() {
@@ -103,7 +61,7 @@ export class AudioDirector {
   }
 
   playCoin() {
-    this._tone(880, 'square', 0.12, 0.002, 0.08, 0.18);
+    this._tone(880, 'square', 0.1, 0.002, 0.06, 0.09);
   }
 
   playImpact() {
@@ -135,10 +93,8 @@ export class AudioDirector {
   }
 
   playDodge() {
-    this._tone(500, 'sine', 0.12, 0.001, 0.08, 0.12, 500, 220, 0.1);
+    this._tone(500, 'sine', 0.1, 0.001, 0.06, 0.05, 500, 220, 0.1);
   }
-
-  // ---- internals ----
 
   _gain(value, destination) {
     const g = this.ctx.createGain();
@@ -167,10 +123,14 @@ export class AudioDirector {
     this.unlock();
     const t = this.ctx.currentTime + delay;
     const osc = this.ctx.createOscillator();
+    const smoother = this.ctx.createBiquadFilter();
+    smoother.type = 'lowpass';
+    smoother.frequency.value = 5200;
     const gain = this.ctx.createGain();
     osc.type = type;
     osc.frequency.value = freq;
-    osc.connect(gain);
+    osc.connect(smoother);
+    smoother.connect(gain);
     gain.connect(this.sfxBus);
     this._envelope(gain, t, attack, hold, release, peak ?? 0.3);
     if (glideStart != null && glideEnd != null) {
@@ -206,10 +166,14 @@ export class AudioDirector {
 
     if (this.musicStep % 2 === 0) {
       const bass = this.ctx.createOscillator();
+      const bassFilter = this.ctx.createBiquadFilter();
+      bassFilter.type = 'lowpass';
+      bassFilter.frequency.value = 400;
       const bassGain = this.ctx.createGain();
       bass.type = 'sawtooth';
       bass.frequency.value = this.dangerMode ? 55 : 48;
-      bass.connect(bassGain);
+      bass.connect(bassFilter);
+      bassFilter.connect(bassGain);
       bassGain.connect(this.musicBus);
       this._envelope(bassGain, t, 0.005, 0.03, this.dangerMode ? 0.09 : 0.16, this.dangerMode ? 0.55 : 0.4);
       bass.start(t);
@@ -277,17 +241,5 @@ export class AudioDirector {
   _stopHeartbeat() {
     clearInterval(this.heartbeatTimer);
     this.heartbeatTimer = null;
-  }
-
-  _rampTo(param, value, duration) {
-    param.cancelScheduledValues(this.ctx.currentTime);
-    param.linearRampToValueAtTime(value, this.ctx.currentTime + duration);
-  }
-
-  _duckAmbient(active) {
-    if (!this.ambientGain) return;
-    const t = this.ctx.currentTime;
-    this.ambientGain.gain.cancelScheduledValues(t);
-    this.ambientGain.gain.linearRampToValueAtTime(active ? 0.0001 : 0.05, t + (active ? 0.12 : 0.9));
   }
 }
