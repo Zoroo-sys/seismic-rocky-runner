@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Seismic Rocky Runner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<div id="vignette"></div>
+<div id="shieldGlow"></div>
+
+<div id="hud">
+  <div class="hud-block" id="scoreBlock">
+    <div class="hud-label">Score</div>
+    <div class="hud-value" id="scoreVal">0</div>
+  </div>
+  <div class="hud-block" id="timeBlock">
+    <div class="hud-label">Uptime</div>
+    <div class="hud-value" id="timeVal">00:00</div>
+  </div>
+</div>
+
+<div id="barsWrap">
+  <div class="bar-row" id="shieldRow">
+    <div class="bar-tag">Shield</div>
+    <div class="bar-track"><div class="bar-fill" id="shieldFill" style="width:0%"></div></div>
+  </div>
+  <div class="bar-row" id="riskRow">
+    <div class="bar-tag">MEV Risk</div>
+    <div class="bar-track"><div class="bar-fill" id="riskFill" style="width:0%"></div></div>
+  </div>
+  <div class="bar-row" id="decryptRow">
+    <div class="bar-tag">Decryption</div>
+    <div class="bar-track"><div class="bar-fill" id="decryptFill" style="width:100%"></div></div>
+  </div>
+</div>
+<div id="boostBanner"></div>
+<div id="checkpointBanner"></div>
+
+<!-- Start / How to Play -->
+<div class="screen" id="startScreen">
+  <div class="panel">
+    <div class="eyebrow" id="startEyebrow"></div>
+    <h1 class="title" id="startTitle"></h1>
+    <p class="lede" id="startLede"></p>
+    <div class="controls-grid">
+      <div class="ctrl"><span class="key">A/D · ←/→</span> Switch lanes</div>
+      <div class="ctrl"><span class="key">W · ↑ · Space</span> Jump</div>
+      <div class="ctrl"><span class="key">S · ↓</span> Slide</div>
+      <div class="ctrl"><span class="key">Swipe</span> Same, on mobile</div>
+    </div>
+    <div class="rules-list" id="startRules"></div>
+    <button class="cta" id="startBtn"></button>
+    <button class="cta ghost" id="codexBtn" style="margin-top:10px;"></button>
+  </div>
+</div>
+
+<!-- Codex -->
+<div class="screen hidden" id="codexScreen">
+  <div class="panel">
+    <div class="eyebrow">SEISMIC NETWORK · CODEX</div>
+    <h1 class="title">What each piece <span class="accent">really means.</span></h1>
+    <p class="lede">This run is a playable metaphor for how Seismic protects a transaction in the mempool.</p>
+    <div class="rules-list codex-list" id="codexList"></div>
+    <button class="cta" id="codexBackBtn">Back</button>
+  </div>
+</div>
+
+<!-- Lose -->
+<div class="screen hidden" id="loseScreen">
+  <div class="panel">
+    <div class="eyebrow" id="loseEyebrow" style="color:var(--danger)"></div>
+    <h1 class="title" id="loseTitle"></h1>
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="loseScore">0</div><div class="lab" id="loseScoreLabel"></div></div>
+      <div class="stat"><div class="num" id="loseTime">0s</div><div class="lab" id="loseTimeLabel"></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="cta danger" id="retryBtnLose"></button>
+      <button class="cta ghost" id="shareBtnLose"></button>
+    </div>
+    <div class="share-status" id="shareStatusLose"></div>
+  </div>
+</div>
+
+<!-- Win -->
+<div class="screen hidden" id="winScreen">
+  <div class="panel">
+    <div class="eyebrow" id="winEyebrow"></div>
+    <h1 class="title" id="winTitle"></h1>
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="winScore">0</div><div class="lab" id="winScoreLabel"></div></div>
+      <div class="stat"><div class="num">360s</div><div class="lab" id="winTimeLabel"></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="cta" id="retryBtnWin"></button>
+      <button class="cta ghost" id="shareBtnWin"></button>
+    </div>
+    <div class="share-status" id="shareStatusWin"></div>
+  </div>
+</div>
+
+<div id="touchControls">
+  <div class="touch-btn" id="btnLeft">◀</div>
+  <div class="touch-btn" id="btnRight">▶</div>
+  <div class="touch-btn" id="btnJump">▲</div>
+  <div class="touch-btn" id="btnSlide">▼</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
