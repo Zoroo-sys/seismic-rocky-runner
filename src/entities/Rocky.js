@@ -119,6 +119,14 @@ export class Rocky {
     crestPlate.position.set(0, 0.75, 0.38);
     this.hips.add(crestPlate);
 
+    const insignia = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.5, 0.5),
+      new THREE.MeshStandardMaterial({ map: insigniaTexture(), transparent: true, roughness: 0.7, metalness: 0.05 })
+    );
+    insignia.position.set(0, 0.75, 0.44); // just proud of the plate, facing the camera
+    insignia.renderOrder = 5; // draw after the shield aura so it never gets washed out
+    this.hips.add(insignia);
+
     for (const side of [-1, 1]) {
       const pad = box([0.4, 0.32, 0.5], stoneLight);
       pad.position.set(side * 0.72, 1.12, 0);
@@ -295,6 +303,47 @@ function stoneMaterial(baseHex, speckHex) {
 
   const texture = new THREE.CanvasTexture(canvas);
   return new THREE.MeshStandardMaterial({ map: texture, color: 0xffffff, roughness: 0.95, metalness: 0.03 });
+}
+
+function insigniaTexture() {
+  const size = 340;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.translate(size / 2, size / 2);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(8,8,8,0.97)';
+
+  const halfW = 132;
+  const bands = [
+    { edgeY: -122, peakDrop: 32, width: 11 },
+    { edgeY: -80, peakDrop: 44, width: 10 },
+  ];
+  const drawBand = (band, flip) => {
+    const s = flip ? -1 : 1;
+    ctx.lineWidth = band.width;
+    ctx.beginPath();
+    ctx.moveTo(-halfW, s * band.edgeY);
+    ctx.quadraticCurveTo(-halfW * 0.4, s * (band.edgeY + band.peakDrop * 0.25), 0, s * (band.edgeY + band.peakDrop));
+    ctx.quadraticCurveTo(halfW * 0.4, s * (band.edgeY + band.peakDrop * 0.25), halfW, s * band.edgeY);
+    ctx.stroke();
+  };
+  bands.forEach((band) => {
+    drawBand(band, false);
+    drawBand(band, true);
+  });
+
+  // the crossing D/C arcs that make the mark read as one crest, not two waves
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.arc(-38, 0, 72, -0.86, 0.86);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(38, 0, 72, Math.PI - 0.86, Math.PI + 0.86);
+  ctx.stroke();
+
+  return new THREE.CanvasTexture(canvas);
 }
 
 function documentTexture() {
