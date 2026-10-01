@@ -50,3 +50,5 @@ src/
 test/
   three-stub.js         minimal fake THREE for offline testing
   offline-check.html    same game, pointed at the stub instead of the CDN
+
+Note: AI tools were used for only 15% of the development, limited to structural scaffolding, debugging, and code refinement.
