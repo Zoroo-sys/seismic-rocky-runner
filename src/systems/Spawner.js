@@ -11,6 +11,17 @@ const LANE_X = [-2.2, 0, 2.2];
 const SPAWN_Z = -95;
 const DESPAWN_Z = 9;
 
+
+function disposeObject(root) {
+  root.traverse((obj) => {
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) {
+      if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
+      else obj.material.dispose();
+    }
+  });
+}
+
 export class Spawner {
   constructor(scene) {
     this.scene = scene;
@@ -29,11 +40,17 @@ export class Spawner {
     this.worldObjects.length = 0;
     this.nextSpawnIn = 1.2;
 
-    if (this.tracker) this.scene.remove(this.tracker.mesh);
+    if (this.tracker) {
+      this.scene.remove(this.tracker.mesh);
+      disposeObject(this.tracker.mesh);
+    }
     this.tracker = null;
     this.trackerSpawnIn = 18 + Math.random() * 10;
 
-    if (this.checkpoint) this.scene.remove(this.checkpoint.mesh);
+    if (this.checkpoint) {
+      this.scene.remove(this.checkpoint.mesh);
+      disposeObject(this.checkpoint.mesh);
+    }
     this.checkpoint = null;
     this.checkpointSpawnIn = 50 + Math.random() * 10;
   }
@@ -130,6 +147,7 @@ export class Spawner {
 
     if (tracker.mesh.position.z > DESPAWN_Z) {
       this.scene.remove(tracker.mesh);
+      disposeObject(tracker.mesh);
       this.tracker = null;
     }
   }
@@ -157,6 +175,7 @@ export class Spawner {
 
     if (checkpoint.mesh.position.z > DESPAWN_Z) {
       this.scene.remove(checkpoint.mesh);
+      disposeObject(checkpoint.mesh);
       this.checkpoint = null;
     }
   }
